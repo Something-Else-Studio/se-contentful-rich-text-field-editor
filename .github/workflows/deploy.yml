@@ -11,8 +11,12 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20.x
-      - run: npm ci
-      - run: npm run build
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.1
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
       - uses: contentful/actions-app-deploy@v1
         with:
           organization-id: ${{ secrets.CONTENTFUL_ORG_ID }}
