@@ -9,7 +9,7 @@ import Home from "./locations/Home";
 import { useSDK } from "@contentful/react-apps-toolkit";
 import SERichTextEditor from "./components/SERichTextEditor";
 
-const ComponentLocationSettings = {
+const _ComponentLocationSettings = {
   [locations.LOCATION_APP_CONFIG]: ConfigScreen,
   [locations.LOCATION_ENTRY_FIELD]: Field,
   [locations.LOCATION_ENTRY_EDITOR]: EntryEditor,
