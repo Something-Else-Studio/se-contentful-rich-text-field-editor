@@ -1,7 +1,5 @@
 import { FieldAppSDK } from "@contentful/app-sdk";
-import { PlateProps } from "@udecode/plate-common";
-
-import { PlatePlugin } from "../internal/types";
+import { PlateProps, type PlatePlugin } from "@udecode/plate-common";
 import {
   createSoftBreakPlugin,
   createExitBreakPlugin,
@@ -41,54 +39,59 @@ export const getPlugins = (
   sdk: FieldAppSDK,
   onAction: RichTextTrackingActionHandler,
   restrictedMarks?: string[],
-): PlatePlugin[] => [
-  createDeserializeDocxPlugin(),
+  additionalPlugins: PlatePlugin[] = [],
+): PlatePlugin[] =>
+  [
+    createDeserializeDocxPlugin(),
 
-  // Tracking - This should come first so all plugins below will have access to `editor.tracking`
-  createTrackingPlugin(onAction),
+    // Tracking - This should come first so all plugins below will have access to `editor.tracking`
+    createTrackingPlugin(onAction),
 
-  // Global / Global shortcuts
-  createDragAndDropPlugin(),
-  // Enable command palette plugin only, if at least action type is allowed
-  ...(Object.values(isCommandPromptPluginEnabled(sdk)).some(Boolean)
-    ? [createCommandPalettePlugin()]
-    : []),
+    // Global / Global shortcuts
+    createDragAndDropPlugin(),
+    // Enable command palette plugin only, if at least action type is allowed
+    ...(Object.values(isCommandPromptPluginEnabled(sdk)).some(Boolean)
+      ? [createCommandPalettePlugin()]
+      : []),
 
-  // Block Elements
-  createParagraphPlugin(),
-  createListPlugin(),
-  createHrPlugin(),
-  createHeadingPlugin(),
-  createQuotePlugin(),
-  createTablePlugin(),
-  createEmbeddedEntryBlockPlugin(sdk),
-  createEmbeddedAssetBlockPlugin(sdk),
-  createEmbeddedResourceBlockPlugin(sdk),
+    // Block Elements
+    createParagraphPlugin(),
+    createListPlugin(),
+    createHrPlugin(),
+    createHeadingPlugin(),
+    createQuotePlugin(),
+    createTablePlugin(),
+    createEmbeddedEntryBlockPlugin(sdk),
+    createEmbeddedAssetBlockPlugin(sdk),
+    createEmbeddedResourceBlockPlugin(sdk),
 
-  // Inline elements
-  createHyperlinkPlugin(sdk),
-  createEmbeddedEntityInlinePlugin(sdk),
-  createEmbeddedResourceInlinePlugin(sdk),
+    // Inline elements
+    createHyperlinkPlugin(sdk),
+    createEmbeddedEntityInlinePlugin(sdk),
+    createEmbeddedResourceInlinePlugin(sdk),
 
-  // Marks
-  createMarksPlugin(),
+    // Marks
+    createMarksPlugin(),
 
-  // Other
-  createTrailingParagraphPlugin(),
-  createTextPlugin(restrictedMarks),
-  createVoidsPlugin(),
-  createSelectOnBackspacePlugin(),
+    // Other
+    createTrailingParagraphPlugin(),
+    createTextPlugin(restrictedMarks),
+    createVoidsPlugin(),
+    createSelectOnBackspacePlugin(),
 
-  // Pasting content from other sources
-  createPasteHTMLPlugin(),
+    // Pasting content from other sources
+    createPasteHTMLPlugin(),
 
-  // These plugins drive their configurations from the list of plugins
-  // above. They MUST come last.
-  createSoftBreakPlugin(),
-  createExitBreakPlugin(),
-  createResetNodePlugin(),
-  createNormalizerPlugin(),
-];
+    // These plugins drive their configurations from the list of plugins
+    // above. They MUST come last.
+    createSoftBreakPlugin(),
+    createExitBreakPlugin(),
+    createResetNodePlugin(),
+    createNormalizerPlugin(),
+
+    // Additional plugins
+    ...additionalPlugins,
+  ] as PlatePlugin[];
 
 export const disableCorePlugins: PlateProps["disableCorePlugins"] = {
   // Note: Enabled by default since v9.0.0 but it causes Cypress's

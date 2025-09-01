@@ -43,6 +43,7 @@ import { EmbedEntityWidget } from "./components/EmbedEntityWidget";
 
 type ToolbarProps = {
   isDisabled?: boolean;
+  additionalButtons?: React.ReactNode[];
 };
 
 const styles = {
@@ -133,7 +134,7 @@ const Dropdown = ({
   );
 };
 
-const Toolbar = ({ isDisabled }: ToolbarProps) => {
+const Toolbar = ({ isDisabled, additionalButtons }: ToolbarProps) => {
   const sdk = useSdkContext();
   const editor = useContentfulEditor();
   const canInsertBlocks = !isNodeTypeSelected(editor, BLOCKS.TABLE);
@@ -229,6 +230,14 @@ const Toolbar = ({ isDisabled }: ToolbarProps) => {
         {isNodeTypeEnabled(sdk.field, BLOCKS.TABLE) && (
           <ToolbarTableButton isDisabled={shouldDisableTables} />
         )}
+
+        {additionalButtons &&
+          additionalButtons.map((button, index) => (
+            <React.Fragment key={index}>
+              <span className={styles.divider} />
+              {button}
+            </React.Fragment>
+          ))}
       </div>
       <div className={styles.embedActionsWrapper}>
         <EmbedEntityWidget
