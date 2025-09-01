@@ -82,3 +82,4 @@ The app can be deployed to Contentful using the upload commands. For CI deployme
 - `CONTENTFUL_ORG_ID`
 - `CONTENTFUL_APP_DEF_ID` 
 - `CONTENTFUL_ACCESS_TOKEN`
+- don't run the dev server - I run that

@@ -2,6 +2,7 @@ import * as React from "react";
 import { TextInput } from "@contentful/f36-components";
 import { TextIcon } from "@contentful/f36-icons";
 import { css } from "emotion";
+import { Range, Text, Point } from "slate";
 
 import { useContentfulEditor } from "../CoreRichText/ContentfulEditorProvider";
 import { PlatePlugin } from "@udecode/plate-common";
@@ -69,14 +70,89 @@ export const ToolbarColorButton = ({
         return;
       }
 
-      // Add color data to the selected text nodes using setNodes
-      // Store the actual hex value instead of a key
-      // biome-ignore lint/suspicious/noExplicitAny: Slate editor types require any for generic node operations
-      editor.setNodes({ data: { textColor: colorValue } } as any, {
-        at: editor.selection,
-        // biome-ignore lint/suspicious/noExplicitAny: Slate node matching requires any for text node detection
-        match: (n) => (n as any).text !== undefined,
-      });
+      // If selection is collapsed (no text selected), do nothing
+      if (Range.isCollapsed(editor.selection)) {
+        return;
+      }
+
+      // Get all text nodes in the selection with their formatting
+      const textEntries = Array.from(
+        editor.nodes({
+          at: editor.selection,
+          match: (n) => Text.isText(n),
+        }),
+      );
+
+      // Check if we're selecting entire text nodes or partial content
+      const { anchor, focus } = editor.selection;
+      let isEntireNodesSelected = true;
+      
+      for (const [, path] of textEntries) {
+        const nodeStart = editor.start(path);
+        const nodeEnd = editor.end(path);
+        
+        // Check if selection boundaries align with node boundaries
+        if (
+          !(Point.compare(anchor, nodeStart) >= 0 && Point.compare(anchor, nodeEnd) <= 0) ||
+          !(Point.compare(focus, nodeStart) >= 0 && Point.compare(focus, nodeEnd) <= 0)
+        ) {
+          // If selection starts/ends outside this node's boundaries, we have partial selection
+          if (
+            (Point.compare(anchor, nodeStart) > 0 && Point.compare(anchor, nodeEnd) < 0) ||
+            (Point.compare(focus, nodeStart) > 0 && Point.compare(focus, nodeEnd) < 0)
+          ) {
+            isEntireNodesSelected = false;
+            break;
+          }
+        }
+      }
+
+      if (isEntireNodesSelected && textEntries.length > 0) {
+        // Case 1: Selection covers entire text nodes - just update their data
+        // biome-ignore lint/suspicious/noExplicitAny: Slate editor types require any for generic node operations
+        editor.setNodes({ data: { textColor: colorValue } } as any, {
+          at: editor.selection,
+          match: (n) => Text.isText(n),
+        });
+      } else {
+        // Case 2: Partial selection - extract nodes with marks and recreate them
+        // biome-ignore lint/suspicious/noExplicitAny: Slate node structure requires any for flexibility
+        const selectedContent: any[] = [];
+        
+        for (const [node, path] of textEntries) {
+          const nodeStart = editor.start(path);
+          const nodeEnd = editor.end(path);
+          // biome-ignore lint/suspicious/noExplicitAny: Slate text nodes need any for mark properties
+          const textNode = node as any;
+          
+          // Determine what portion of this node is selected
+          const selectionStart = Point.compare(anchor, nodeStart) > 0 ? anchor : nodeStart;
+          const selectionEnd = Point.compare(focus, nodeEnd) < 0 ? focus : nodeEnd;
+          
+          // Get the text content for this portion
+          const startOffset = selectionStart.offset;
+          const endOffset = selectionEnd.offset;
+          const selectedTextPortion = textNode.text.slice(startOffset, endOffset);
+          
+          if (selectedTextPortion) {
+            // Create a new node with the same marks plus color data
+            const newNode = {
+              ...textNode, // This preserves all marks (bold, italic, etc.)
+              text: selectedTextPortion,
+              data: { ...textNode.data, textColor: colorValue }
+            };
+            selectedContent.push(newNode);
+          }
+        }
+        
+        // Delete the selected content and insert the colored version
+        editor.delete();
+        
+        if (selectedContent.length > 0) {
+          // biome-ignore lint/suspicious/noExplicitAny: Slate insertNodes requires any for custom node properties
+          editor.insertNodes(selectedContent as any);
+        }
+      }
     },
     [editor],
   );
@@ -145,31 +221,6 @@ export const ToolbarColorButton = ({
 export const ColorPlugin = (): PlatePlugin => {
   return {
     key: "ColorPlugin",
-    // biome-ignore lint/suspicious/noExplicitAny: Slate leaf props require any for extensibility
-    renderLeaf: ({ attributes, children, leaf }: any) => {
-      // Check if the leaf has color data in its data property
-      // biome-ignore lint/suspicious/noExplicitAny: Slate leaf data property is untyped
-      const colorData = (leaf as any).data?.textColor;
-      if (colorData) {
-        // colorData now contains the actual hex value or color key
-        let colorValue = colorData;
-
-        // If it's not a hex color, try to find it in the config
-        if (!colorData.startsWith("#")) {
-          const config = getColorConfig();
-          const configColor = config.colors.find((c) => c.key === colorData);
-          colorValue = configColor?.value || colorData;
-        }
-
-        return (
-          <span {...attributes} style={{ color: colorValue }}>
-            {children}
-          </span>
-        );
-      }
-
-      return <span {...attributes}>{children}</span>;
-    },
     inject: {
       pluginsByKey: {
         PasteHTMLPlugin: {
