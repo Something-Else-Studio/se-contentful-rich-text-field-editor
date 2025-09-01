@@ -3,7 +3,11 @@ import type { RichTextTrackingActionHandler } from "../CoreRichText/plugins/Trac
 import type { FieldAppSDK } from "@contentful/app-sdk";
 import type { Document } from "@contentful/rich-text-types";
 import { RichTextEditor } from "../CoreRichText";
-import { ColorPlugin, ToolbarColorButton } from "./plugins";
+import {
+  ColorPlugin,
+  ToolbarColorButton,
+  ToolbarBackgroundColorButton,
+} from "./plugins";
 import colorConfig from "../config/colorConfig.json";
 
 type RichTextProps = {
@@ -20,31 +24,56 @@ type RichTextProps = {
 };
 
 const SERichTextEditor = (props: RichTextProps) => {
+  props.sdk.window.startAutoResizer();
   // biome-ignore lint/suspicious/noExplicitAny: Slate editor types require any for generic operations
   const additionalPlugins = [ColorPlugin() as any];
-  const additionalToolbarButtons = [<ToolbarColorButton key="color" />];
+  const additionalToolbarButtons = [
+    <ToolbarColorButton key="color" />,
+    <ToolbarBackgroundColorButton key="background-color" />,
+  ];
 
   // Custom renderLeaf function to handle color data on text nodes
   const renderLeaf = React.useCallback(
     // biome-ignore lint/suspicious/noExplicitAny: Slate leaf props require any for extensibility
     ({ attributes, children, leaf }: any) => {
-      // Check if the leaf has color data in its data property
       // biome-ignore lint/suspicious/noExplicitAny: Slate leaf data property is untyped
-      const colorData = (leaf as any).data?.textColor;
-      if (colorData) {
-        // colorData can be either a hex value or a color key
-        let colorValue = colorData;
+      const leafData = (leaf as any).data;
+      const textColorData = leafData?.textColor;
+      const backgroundColorData = leafData?.backgroundColor;
 
+      // Build style object
+      const style: React.CSSProperties = {};
+
+      // Handle text color
+      if (textColorData) {
+        let textColorValue = textColorData;
         // If it's not a hex color, try to find it in the config
-        if (!colorData.startsWith("#")) {
+        if (!textColorData.startsWith("#")) {
           const configColor = colorConfig.colors.find(
-            (c) => c.key === colorData,
+            (c) => c.key === textColorData,
           );
-          colorValue = configColor?.value || colorData;
+          textColorValue = configColor?.value || textColorData;
         }
+        style.color = textColorValue;
+      }
 
+      // Handle background color
+      if (backgroundColorData) {
+        let backgroundColorValue = backgroundColorData;
+        // If it's not a hex color, try to find it in the config
+        if (!backgroundColorData.startsWith("#")) {
+          const configColor = colorConfig.colors.find(
+            (c) => c.key === backgroundColorData,
+          );
+          backgroundColorValue = configColor?.value || backgroundColorData;
+        }
+        style.backgroundColor = backgroundColorValue;
+      }
+
+      // Apply styles if any colors are present
+      if (Object.keys(style).length > 0) {
         return (
-          <span {...attributes} style={{ color: colorValue }}>
+          <span {...attributes} style={style}>
             {children}
           </span>
         );
