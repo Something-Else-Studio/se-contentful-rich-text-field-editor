@@ -11,16 +11,14 @@
       "scripts/**/*.{js,ts}",
       "*.{js,jsx,ts,tsx,json}",
       "!**/__generated/**",
-      "!**/storybook-static/**",
       "!**/node_modules/**",
       "!**/.git",
       "!**/.next",
       "!**/.vercel",
       "!**/.vscode",
-      "!src/app/globals.css",
       "!**/*.d.ts",
       "!.local-store/**",
-      "!src/middleware.ts"
+      "!src/CoreRichText"
     ]
   },
   "formatter": {

@@ -1,32 +1,41 @@
 import * as React from "react";
-import { Button } from "@contentful/f36-components";
+import { TextInput } from "@contentful/f36-components";
+import { TextIcon } from "@contentful/f36-icons";
 import { css } from "emotion";
 
 import { useContentfulEditor } from "../CoreRichText/ContentfulEditorProvider";
 import { PlatePlugin } from "@udecode/plate-common";
 import { Menu } from "@contentful/f36-components";
+import { ToolbarButton } from "../CoreRichText/plugins/shared/ToolbarButton";
+import colorConfig from "../config/colorConfig.json";
 
-// Predefined color palette - using CSS classes instead of custom node types
-const COLOR_CLASSES = {
-  red: "text-red-500",
-  blue: "text-blue-500",
-  green: "text-green-500",
-  yellow: "text-yellow-500",
-  purple: "text-purple-500",
-  pink: "text-pink-500",
-  black: "text-black",
-  gray: "text-gray-500",
-} as const;
+// Color configuration interface
+interface ColorConfig {
+  enableHexPicker: boolean;
+  colors: Array<{
+    key: string;
+    name: string;
+    value: string;
+  }>;
+}
 
-type ColorKey = keyof typeof COLOR_CLASSES;
+// Load color configuration with fallback
+const getColorConfig = (): ColorConfig => {
+  try {
+    return colorConfig as ColorConfig;
+  } catch {
+    // Fallback configuration if JSON loading fails
+    return {
+      enableHexPicker: false,
+      colors: [
+        { key: "black", name: "Black", value: "#000000" },
+        { key: "gray", name: "Gray", value: "#6b7280" },
+      ],
+    };
+  }
+};
 
 const styles = {
-  colorButton: css({
-    height: "30px",
-    width: "30px",
-    marginLeft: "2px",
-    marginRight: "2px",
-  }),
   colorMenuItem: css({
     width: "24px",
     height: "24px",
@@ -36,6 +45,13 @@ const styles = {
     display: "inline-block",
     margin: "4px",
   }),
+  hexInputContainer: css({
+    padding: "8px",
+    borderTop: "1px solid #e5e7eb",
+  }),
+  hexInput: css({
+    width: "100%",
+  }),
 };
 
 export const ToolbarColorButton = ({
@@ -44,37 +60,36 @@ export const ToolbarColorButton = ({
   isDisabled?: boolean;
 }) => {
   const editor = useContentfulEditor();
+  const config = React.useMemo(() => getColorConfig(), []);
+  const [hexValue, setHexValue] = React.useState("");
 
   const handleColorSelect = React.useCallback(
-    (colorKey: ColorKey) => {
+    (colorValue: string) => {
       if (!editor?.selection) {
-        // biome-ignore lint/suspicious/noConsole: <explanation>
-        console.log("No selection found");
         return;
       }
 
-      // biome-ignore lint/suspicious/noConsole: <explanation>
-      console.log("Selection", editor.selection);
-      // Get the selected text content
-      const selectedText = editor.string(editor.selection);
-      // biome-ignore lint/suspicious/noConsole: <explanation>
-      console.log("Selected text:", selectedText);
-      // biome-ignore lint/suspicious/noConsole: <explanation>
-      console.log("Selected color:", colorKey);
-
       // Add color data to the selected text nodes using setNodes
-      // This adds custom data to existing text nodes in the data property
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-      editor.setNodes({ data: { textColor: colorKey } } as any, {
+      // Store the actual hex value instead of a key
+      // biome-ignore lint/suspicious/noExplicitAny: Slate editor types require any for generic node operations
+      editor.setNodes({ data: { textColor: colorValue } } as any, {
         at: editor.selection,
-        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        // biome-ignore lint/suspicious/noExplicitAny: Slate node matching requires any for text node detection
         match: (n) => (n as any).text !== undefined,
       });
-
-      // biome-ignore lint/suspicious/noConsole: <explanation>
-      console.log("Added color data to selected text nodes");
     },
     [editor],
+  );
+
+  const handleHexSubmit = React.useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (hexValue && /^#[0-9A-Fa-f]{6}$/.test(hexValue)) {
+        handleColorSelect(hexValue);
+        setHexValue("");
+      }
+    },
+    [hexValue, handleColorSelect],
   );
 
   if (!editor) return null;
@@ -82,78 +97,69 @@ export const ToolbarColorButton = ({
   return (
     <Menu>
       <Menu.Trigger>
-        <Button
-          size="small"
-          className={styles.colorButton}
-          isDisabled={isDisabled}
+        <ToolbarButton
+          title="Text Color"
           testId="color-toolbar-button"
+          onClick={() => {}}
+          isDisabled={isDisabled}
         >
-          Color
-        </Button>
+          <TextIcon />
+        </ToolbarButton>
       </Menu.Trigger>
       <Menu.List>
-        {Object.keys(COLOR_CLASSES).map((colorKey) => (
+        {config.colors.map((color) => (
           <Menu.Item
-            key={colorKey}
-            onClick={() => handleColorSelect(colorKey as ColorKey)}
+            key={color.key}
+            onClick={() => handleColorSelect(color.value)}
           >
             <div
               className={styles.colorMenuItem}
               style={{
-                backgroundColor:
-                  colorKey === "red"
-                    ? "#ef4444"
-                    : colorKey === "blue"
-                      ? "#3b82f6"
-                      : colorKey === "green"
-                        ? "#10b981"
-                        : colorKey === "yellow"
-                          ? "#f59e0b"
-                          : colorKey === "purple"
-                            ? "#8b5cf6"
-                            : colorKey === "pink"
-                              ? "#ec4899"
-                              : colorKey === "black"
-                                ? "#000000"
-                                : "#6b7280",
+                backgroundColor: color.value,
               }}
-              title={colorKey}
+              title={color.name}
             />
-            {colorKey}
+            {color.name}
           </Menu.Item>
         ))}
+        {config.enableHexPicker && (
+          <div className={styles.hexInputContainer}>
+            <form onSubmit={handleHexSubmit}>
+              <TextInput
+                className={styles.hexInput}
+                placeholder="#000000"
+                value={hexValue}
+                onChange={(e) => setHexValue(e.target.value)}
+                size="small"
+                pattern="#[0-9A-Fa-f]{6}"
+                title="Enter hex color (e.g., #ff0000)"
+              />
+            </form>
+          </div>
+        )}
       </Menu.List>
     </Menu>
   );
 };
 
 export const ColorPlugin = (): PlatePlugin => {
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   return {
     key: "ColorPlugin",
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    // biome-ignore lint/suspicious/noExplicitAny: Slate leaf props require any for extensibility
     renderLeaf: ({ attributes, children, leaf }: any) => {
       // Check if the leaf has color data in its data property
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      // biome-ignore lint/suspicious/noExplicitAny: Slate leaf data property is untyped
       const colorData = (leaf as any).data?.textColor;
       if (colorData) {
-        // Map color key to actual color value
-        const colorValue =
-          colorData === "red"
-            ? "#ef4444"
-            : colorData === "blue"
-              ? "#3b82f6"
-              : colorData === "green"
-                ? "#10b981"
-                : colorData === "yellow"
-                  ? "#f59e0b"
-                  : colorData === "purple"
-                    ? "#8b5cf6"
-                    : colorData === "pink"
-                      ? "#ec4899"
-                      : colorData === "black"
-                        ? "#000000"
-                        : "#6b7280";
+        // colorData now contains the actual hex value or color key
+        let colorValue = colorData;
+
+        // If it's not a hex color, try to find it in the config
+        if (!colorData.startsWith("#")) {
+          const config = getColorConfig();
+          const configColor = config.colors.find((c) => c.key === colorData);
+          colorValue = configColor?.value || colorData;
+        }
 
         return (
           <span {...attributes} style={{ color: colorValue }}>
@@ -199,6 +205,6 @@ export const ColorPlugin = (): PlatePlugin => {
         },
       },
     },
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+    // biome-ignore lint/suspicious/noExplicitAny: Plate plugin interface requires any for flexibility
   } as any;
 };

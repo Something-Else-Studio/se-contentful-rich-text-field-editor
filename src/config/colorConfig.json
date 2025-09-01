@@ -1,0 +1,45 @@
+{
+  "enableHexPicker": true,
+  "colors": [
+    {
+      "key": "red",
+      "name": "Red",
+      "value": "#ef4444"
+    },
+    {
+      "key": "blue", 
+      "name": "Blue",
+      "value": "#3b82f6"
+    },
+    {
+      "key": "green",
+      "name": "Green", 
+      "value": "#10b981"
+    },
+    {
+      "key": "yellow",
+      "name": "Yellow",
+      "value": "#f59e0b"
+    },
+    {
+      "key": "purple",
+      "name": "Purple",
+      "value": "#8b5cf6"
+    },
+    {
+      "key": "pink",
+      "name": "Pink",
+      "value": "#ec4899"
+    },
+    {
+      "key": "black",
+      "name": "Black",
+      "value": "#000000"
+    },
+    {
+      "key": "gray",
+      "name": "Gray",
+      "value": "#6b7280"
+    }
+  ]
+}
