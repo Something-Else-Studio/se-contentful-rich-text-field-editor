@@ -1,0 +1,64 @@
+{
+  "editor.defaultFormatter": "biomejs.biome",
+  "[jsonc]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[graphql]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "editor.formatOnSave": true,
+  "editor.wordWrap": "on",
+
+  "editor.codeActionsOnSave": {
+    "quickfix.biome": "explicit",
+    "source.organizeImports.biome": "explicit"
+  },
+  "editor.quickSuggestions": {
+    "strings": true
+  },
+  "tailwindCSS.validate": true,
+  "tailwindCSS.classFunctions": ["tw", "clsx", "cva", "cn", "classNames"],
+  "tailwindCSS.experimental.classRegex": [
+    "[a-zA-Z]*ClassName='([^']+)'",
+    "[a-zA-Z]*ClassName=\"([^\"]+)\"",
+    "[a-zA-Z]*ClassName={`([^`]+)`}"
+  ],
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "files.exclude": {
+    "**/.cache": true,
+    "**/.next": true,
+    "**/node_modules": true
+  },
+  "search.exclude": {
+    "**/.cache": true,
+    "**/.next": true,
+    "**/node_modules": true
+  },
+  "files.readonlyInclude": {
+    "**/node_modules/**": true,
+    "**/src/lib/__generated/*": true
+  },
+  "prettier.enable": false,
+  "eslint.enable": false,
+  "json.schemaDownload.enable": true
+}

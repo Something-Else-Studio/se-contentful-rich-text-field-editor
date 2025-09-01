@@ -1,0 +1,17 @@
+import { Canvas, Meta, Markdown, Story, Controls } from '@storybook/blocks';
+import * as RichTextEditorStories from '../stories/RichTextEditor.stories';
+
+import ImportSnippet from '../md/IMPORTSNIPPET.md?raw';
+import CodeSnippet from '../md/CODESNIPPET.md?raw';
+
+<Markdown>{ImportSnippet}</Markdown>
+
+<Meta of={RichTextEditorStories} />
+
+## In Action
+
+<Story of={RichTextEditorStories.Default} />
+
+## As field app
+
+<Markdown>{CodeSnippet}</Markdown>
