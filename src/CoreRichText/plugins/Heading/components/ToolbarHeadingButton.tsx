@@ -15,6 +15,7 @@ import {
 } from "../../../helpers/editor";
 import { isNodeTypeEnabled } from "../../../helpers/validations";
 import { Element } from "../../../internal/types";
+import { setNodes } from "../../../internal/transforms";
 import { useSdkContext } from "../../../SdkProvider";
 
 const styles = {
@@ -29,6 +30,14 @@ const styles = {
     `,
     [BLOCKS.PARAGRAPH]: css`
       font-size: ${tokens.fontSizeL};
+    `,
+    "Paragraph 1": css`
+      font-size: ${tokens.fontSizeL};
+      font-weight: ${tokens.fontWeightMedium};
+    `,
+    "Paragraph 2": css`
+      font-size: ${tokens.fontSizeL};
+      font-style: italic;
     `,
     [BLOCKS.HEADING_1]: css`
       font-size: 1.625rem;
@@ -53,6 +62,8 @@ const styles = {
 
 const LABELS = {
   [BLOCKS.PARAGRAPH]: "Normal text",
+  "Paragraph 1": "Paragraph 1",
+  "Paragraph 2": "Paragraph 2",
   [BLOCKS.HEADING_1]: "Heading 1",
   [BLOCKS.HEADING_2]: "Heading 2",
   [BLOCKS.HEADING_3]: "Heading 3",
@@ -81,6 +92,15 @@ export function ToolbarHeadingButton(props: ToolbarHeadingButtonProps) {
     for (const element of elements) {
       if (typeof element === "object" && "type" in element) {
         const el = element as Element;
+        // Check for paragraph subtypes first
+        if (el.type === BLOCKS.PARAGRAPH && el.data?.type) {
+          const paragraphType = el.data.type as string;
+          if (LABELS[paragraphType]) {
+            setSelected(paragraphType);
+            return;
+          }
+        }
+        // Check for regular block types
         const match = LABELS[el.type];
         if (match) {
           setSelected(el.type);
@@ -94,10 +114,13 @@ export function ToolbarHeadingButton(props: ToolbarHeadingButtonProps) {
 
   const [nodeTypesByEnablement, someHeadingsEnabled] = React.useMemo(() => {
     const nodeTypesByEnablement = Object.fromEntries(
-      Object.keys(LABELS).map((nodeType) => [
-        nodeType,
-        isNodeTypeEnabled(sdk.field, nodeType),
-      ]),
+      Object.keys(LABELS).map((nodeType) => {
+        // For paragraph subtypes, check if BLOCKS.PARAGRAPH is enabled
+        if (nodeType === "Paragraph 1" || nodeType === "Paragraph 2") {
+          return [nodeType, isNodeTypeEnabled(sdk.field, BLOCKS.PARAGRAPH)];
+        }
+        return [nodeType, isNodeTypeEnabled(sdk.field, nodeType)];
+      }),
     );
     const someHeadingsEnabled =
       Object.values(nodeTypesByEnablement).filter(Boolean).length > 0;
@@ -105,7 +128,7 @@ export function ToolbarHeadingButton(props: ToolbarHeadingButtonProps) {
   }, [sdk.field]);
 
   function handleOnSelectItem(
-    type: BLOCKS,
+    type: string,
   ): (event: React.MouseEvent<HTMLButtonElement>) => void {
     return (event: React.MouseEvent<HTMLButtonElement>) => {
       event.preventDefault();
@@ -117,26 +140,52 @@ export function ToolbarHeadingButton(props: ToolbarHeadingButtonProps) {
 
       const prevOnChange = editor.onChange;
       /*
-       The focus might happen at point in time when
-       `toggleElement` (helper for toggleNodeType) changes aren't rendered yet, causing the browser
-       to place the cursor at the start of the text.
-       We wait for the change event before focusing
-       the editor again. This ensures the cursor is back at the previous
-       position.*/
+        The focus might happen at point in time when
+        `toggleElement` (helper for toggleNodeType) changes aren't rendered yet, causing the browser
+        to place the cursor at the start of the text.
+        We wait for the change event before focusing
+        the editor again. This ensures the cursor is back at the previous
+        position.*/
       editor.onChange = (...args) => {
         focus(editor);
         editor.onChange = prevOnChange;
         prevOnChange(...args);
       };
 
-      if (type !== BLOCKS.PARAGRAPH) {
-        const isActive = isBlockSelected(editor, type);
-        editor.tracking.onToolbarAction(isActive ? "remove" : "insert", {
-          nodeType: type,
+      // Handle paragraph subtypes
+      if (type === "Paragraph 1" || type === "Paragraph 2") {
+        // Set data.type for paragraph subtypes
+        const elements = getElementFromCurrentSelection(editor);
+        for (const element of elements) {
+          if (typeof element === "object" && "type" in element) {
+            const el = element as Element;
+            if (el.type === BLOCKS.PARAGRAPH) {
+              // Update the data.type
+              setNodes(
+                editor,
+                { data: { ...el.data, type } },
+                { at: editor.selection },
+              );
+              break;
+            }
+          }
+        }
+        editor.tracking.onToolbarAction("insert", {
+          nodeType: BLOCKS.PARAGRAPH,
+        });
+      } else {
+        // Handle regular block types
+        if (type !== BLOCKS.PARAGRAPH) {
+          const isActive = isBlockSelected(editor, type);
+          editor.tracking.onToolbarAction(isActive ? "remove" : "insert", {
+            nodeType: type,
+          });
+        }
+        toggleElement(editor, {
+          activeType: type as BLOCKS,
+          inactiveType: type as BLOCKS,
         });
       }
-
-      toggleElement(editor, { activeType: type, inactiveType: type });
     };
   }
 
@@ -165,7 +214,7 @@ export function ToolbarHeadingButton(props: ToolbarHeadingButtonProps) {
                 <Menu.Item
                   key={nodeType}
                   isInitiallyFocused={selected === nodeType}
-                  onClick={handleOnSelectItem(nodeType as BLOCKS)}
+                  onClick={handleOnSelectItem(nodeType)}
                   testId={`dropdown-option-${nodeType}`}
                   disabled={props.isDisabled}
                 >
