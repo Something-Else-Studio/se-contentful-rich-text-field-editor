@@ -14,5 +14,9 @@
     "jsx": "react-jsx"
   },
   "include": ["src"],
-  "exclude": ["actions", "functions"]
+  "exclude": ["actions", "functions"],
+  "references": [
+    { "path": "./src/CoreRichText/tsconfig.json" },
+    { "path": "./src/components/tsconfig.json" }
+  ]
 }

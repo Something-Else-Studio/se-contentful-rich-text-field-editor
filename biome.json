@@ -107,6 +107,35 @@
   },
   "overrides": [
     {
+      "includes": ["src/components/**/*.{ts,tsx}"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noConstAssign": "error",
+            "noGlobalObjectCalls": "error",
+            "noInvalidBuiltinInstantiation": "error",
+            "noInvalidConstructorSuper": "error",
+            "noSetterReturn": "error",
+            "noUndeclaredVariables": "error",
+            "noUnreachable": "error",
+            "noUnreachableSuper": "error"
+          },
+          "suspicious": {
+            "noClassAssign": "error",
+            "noDuplicateClassMembers": "error",
+            "noDuplicateObjectKeys": "error",
+            "noDuplicateParameters": "error",
+            "noFunctionAssign": "error",
+            "noImportAssign": "error",
+            "noRedeclare": "error",
+            "noUnsafeNegation": "error",
+            "noWith": "error",
+            "useGetterReturn": "error"
+          }
+        }
+      }
+    },
+    {
       "includes": ["src/components/{ui,motion-primitives}/**/*.{ts,tsx}"],
       "linter": {
         "rules": {}
