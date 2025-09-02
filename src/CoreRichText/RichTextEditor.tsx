@@ -47,6 +47,16 @@ type RichTextProps = {
   additionalPlugins?: PlatePlugin[];
   additionalToolbarButtons?: React.ReactNode[];
   renderLeaf?: (props: any) => React.ReactElement;
+  // Custom toolbar and plugin support
+  customToolbar?: React.ComponentType<{
+    isDisabled?: boolean;
+    sdk: FieldAppSDK;
+  }>;
+  customGetPlugins?: (
+    sdk: FieldAppSDK,
+    onAction: RichTextTrackingActionHandler,
+    restrictedMarks?: string[],
+  ) => PlatePlugin[];
 };
 
 type ConnectedRichTextProps = {
@@ -63,9 +73,18 @@ type ConnectedRichTextProps = {
   stickyToolbarOffset?: number;
   additionalPlugins?: PlatePlugin[];
   additionalToolbarButtons?: React.ReactNode[];
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  // biome-ignore lint/suspicious/noExplicitAny: Slate leaf props require any for extensibility
   renderLeaf?: (props: any) => React.ReactElement;
+  // Custom toolbar and plugin support
+  customToolbar?: React.ComponentType<{
+    isDisabled?: boolean;
+    sdk: FieldAppSDK;
+  }>;
+  customGetPlugins?: (
+    sdk: FieldAppSDK,
+    onAction: RichTextTrackingActionHandler,
+    restrictedMarks?: string[],
+  ) => PlatePlugin[];
 };
 
 export const ConnectedRichTextEditor = (props: ConnectedRichTextProps) => {
@@ -74,13 +93,15 @@ export const ConnectedRichTextEditor = (props: ConnectedRichTextProps) => {
   const id = getContentfulEditorId(sdk);
   const plugins = React.useMemo(
     () =>
-      getPlugins(
-        sdk,
-        onAction ?? noop,
-        restrictedMarks,
-        props.additionalPlugins,
-      ) as PlatePlugin[],
-    [sdk, onAction, restrictedMarks, props.additionalPlugins],
+      props.customGetPlugins
+        ? props.customGetPlugins(sdk, onAction ?? noop, restrictedMarks)
+        : getPlugins(
+            sdk,
+            onAction ?? noop,
+            restrictedMarks,
+            props.additionalPlugins,
+          ) as PlatePlugin[],
+    [sdk, onAction, restrictedMarks, props.additionalPlugins, props.customGetPlugins],
   );
 
   const initialValue = React.useMemo(() => {
@@ -126,10 +147,14 @@ export const ConnectedRichTextEditor = (props: ConnectedRichTextProps) => {
                   isDisabled={props.isDisabled}
                   offset={props.stickyToolbarOffset}
                 >
-                  <Toolbar
-                    isDisabled={props.isDisabled}
-                    additionalButtons={props.additionalToolbarButtons}
-                  />
+                  {props.customToolbar ? (
+                    <props.customToolbar isDisabled={props.isDisabled} sdk={sdk} />
+                  ) : (
+                    <Toolbar
+                      isDisabled={props.isDisabled}
+                      additionalButtons={props.additionalToolbarButtons}
+                    />
+                  )}
                 </StickyToolbarWrapper>
               )}
               <SyncEditorChanges

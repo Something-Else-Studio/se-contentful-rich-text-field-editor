@@ -3,12 +3,8 @@ import type { RichTextTrackingActionHandler } from "../CoreRichText/plugins/Trac
 import type { FieldAppSDK } from "@contentful/app-sdk";
 import type { Document } from "@contentful/rich-text-types";
 import { RichTextEditor } from "../CoreRichText";
-import {
-  ColorPlugin,
-  ToolbarColorButton,
-  ToolbarBackgroundColorButton,
-} from "./plugins";
-import { ToolbarListTypeButton } from "./ToolbarListTypeButton";
+import { CustomToolbar } from "./CustomToolbar";
+import { getCustomPlugins } from "./customPlugins";
 import colorConfig from "../config/colorConfig.json";
 
 type RichTextProps = {
@@ -26,13 +22,6 @@ type RichTextProps = {
 
 const SERichTextEditor = (props: RichTextProps) => {
   props.sdk.window.startAutoResizer();
-  // biome-ignore lint/suspicious/noExplicitAny: Slate editor types require any for generic operations
-  const additionalPlugins = [ColorPlugin() as any];
-  const additionalToolbarButtons = [
-    <ToolbarColorButton key="color" />,
-    <ToolbarBackgroundColorButton key="background-color" />,
-    <ToolbarListTypeButton key="list-type" />,
-  ];
 
   // Custom renderLeaf function to handle color data on text nodes
   const renderLeaf = React.useCallback(
@@ -90,8 +79,8 @@ const SERichTextEditor = (props: RichTextProps) => {
     <RichTextEditor
       {...props}
       minHeight={400}
-      additionalPlugins={additionalPlugins}
-      additionalToolbarButtons={additionalToolbarButtons}
+      customToolbar={CustomToolbar}
+      customGetPlugins={getCustomPlugins}
       renderLeaf={renderLeaf}
     />
   );
