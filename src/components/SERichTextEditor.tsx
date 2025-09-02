@@ -37,7 +37,7 @@ const RichTextEditorWithConfig = (props: RichTextProps) => {
       const style: React.CSSProperties = {};
 
       // Handle text color
-      if (textColorData) {
+      if (textColorData && textColorData !== "") {
         let textColorValue = textColorData;
         // If it's not a hex color, try to find it in the config
         if (!textColorData.startsWith("#")) {
@@ -50,7 +50,7 @@ const RichTextEditorWithConfig = (props: RichTextProps) => {
       }
 
       // Handle background color
-      if (backgroundColorData) {
+      if (backgroundColorData && backgroundColorData !== "") {
         let backgroundColorValue = backgroundColorData;
         // If it's not a hex color, try to find it in the config
         if (!backgroundColorData.startsWith("#")) {

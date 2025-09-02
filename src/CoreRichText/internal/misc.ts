@@ -2,7 +2,8 @@ import * as p from "@udecode/plate-common";
 import * as s from "slate";
 
 import { normalize } from "./transforms";
-import type { Value, PlateEditor, Location, PlatePlugin } from "./types";
+import type { Value, PlateEditor, Location } from "./types";
+import { PlatePlugin } from "@udecode/plate-common";
 
 export type CreatePlateEditorOptions = Omit<
   p.CreatePlateEditorOptions<Value, PlateEditor>,

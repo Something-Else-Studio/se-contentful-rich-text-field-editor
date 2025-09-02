@@ -23,9 +23,8 @@ import { unwrapList } from "../CoreRichText/plugins/List/transforms/unwrapList";
 import { isListTypeActive } from "../CoreRichText/plugins/List/utils";
 import { focus } from "../CoreRichText/helpers/editor";
 import { useLists, useTypography } from "../contexts/ConfigContext";
-import { 
+import {
   getElementFromCurrentSelection,
-  isBlockSelected,
   toggleElement,
 } from "../CoreRichText/helpers/editor";
 import { setNodes } from "../CoreRichText/internal/transforms";
@@ -88,7 +87,7 @@ interface ListOption {
 interface HeadingParagraphOption {
   key: string;
   label: string;
-  type: 'paragraph' | 'heading';
+  type: "paragraph" | "heading";
   blockType: BLOCKS;
   style?: {
     fontSize: string;
@@ -104,7 +103,10 @@ interface HeadingParagraphDropdownProps {
   sdk: FieldAppSDK;
 }
 
-const HeadingParagraphDropdown: React.FC<HeadingParagraphDropdownProps> = ({ isDisabled, sdk }) => {
+const HeadingParagraphDropdown: React.FC<HeadingParagraphDropdownProps> = ({
+  isDisabled,
+  sdk,
+}) => {
   const editor = useContentfulEditor();
   const [isOpen, setOpen] = React.useState(false);
   const [selected, setSelected] = React.useState<string>("paragraph-normal");
@@ -118,7 +120,7 @@ const HeadingParagraphDropdown: React.FC<HeadingParagraphDropdownProps> = ({ isD
     opts.push({
       key: "paragraph-normal",
       label: "Normal text",
-      type: 'paragraph',
+      type: "paragraph",
       blockType: BLOCKS.PARAGRAPH,
     });
 
@@ -127,7 +129,7 @@ const HeadingParagraphDropdown: React.FC<HeadingParagraphDropdownProps> = ({ isD
       opts.push({
         key: `paragraph-${paragraph.key}`,
         label: paragraph.name,
-        type: 'paragraph',
+        type: "paragraph",
         blockType: BLOCKS.PARAGRAPH,
         style: paragraph.style,
         paragraphKey: paragraph.key,
@@ -136,11 +138,11 @@ const HeadingParagraphDropdown: React.FC<HeadingParagraphDropdownProps> = ({ isD
 
     // Add configured headings
     for (const heading of typography.headings) {
-      const blockType = `heading-${heading.level.replace('h', '')}` as BLOCKS;
+      const blockType = `heading-${heading.level.replace("h", "")}` as BLOCKS;
       opts.push({
         key: heading.level,
         label: heading.name,
-        type: 'heading',
+        type: "heading",
         blockType,
         style: heading.style,
       });
@@ -163,11 +165,11 @@ const HeadingParagraphDropdown: React.FC<HeadingParagraphDropdownProps> = ({ isD
     for (const element of elements) {
       if (typeof element === "object" && "type" in element) {
         const el = element as Element;
-        
+
         // Check for paragraph with style
         if (el.type === BLOCKS.PARAGRAPH) {
-          if (el.data?.['paragraphStyle']) {
-            const paragraphKey = el.data['paragraphStyle'] as string;
+          if (el.data?.["paragraphStyle"]) {
+            const paragraphKey = el.data["paragraphStyle"] as string;
             setSelected(`paragraph-${paragraphKey}`);
             return;
           } else {
@@ -175,10 +177,10 @@ const HeadingParagraphDropdown: React.FC<HeadingParagraphDropdownProps> = ({ isD
             return;
           }
         }
-        
+
         // Check for headings
-        if (el.type.startsWith('heading-')) {
-          setSelected(el.type.replace('heading-', 'h'));
+        if (el.type.startsWith("heading-")) {
+          setSelected(el.type.replace("heading-", "h"));
           return;
         }
       }
@@ -194,32 +196,32 @@ const HeadingParagraphDropdown: React.FC<HeadingParagraphDropdownProps> = ({ isD
       setSelected(option.key);
       setOpen(false);
 
-      if (option.type === 'paragraph') {
+      if (option.type === "paragraph") {
         // Handle paragraph styles
         const elements = getElementFromCurrentSelection(editor);
         for (const element of elements) {
           if (typeof element === "object" && "type" in element) {
             const el = element as Element;
-            
+
             if (option.paragraphKey) {
               // Set paragraph with style
               setNodes(
                 editor,
-                { 
+                {
                   type: BLOCKS.PARAGRAPH,
-                  data: { ...el.data, ['paragraphStyle']: option.paragraphKey }
+                  data: { ...el.data, ["paragraphStyle"]: option.paragraphKey },
                 },
                 { at: editor.selection },
               );
             } else {
               // Set normal paragraph (remove style)
               const newData = { ...el.data };
-              delete newData['paragraphStyle'];
+              delete newData["paragraphStyle"];
               setNodes(
                 editor,
-                { 
+                {
                   type: BLOCKS.PARAGRAPH,
-                  data: newData
+                  data: newData,
                 },
                 { at: editor.selection },
               );
@@ -288,7 +290,7 @@ const HeadingParagraphDropdown: React.FC<HeadingParagraphDropdownProps> = ({ isD
           <ChevronDownIcon style={{ marginLeft: "4px", fontSize: "10px" }} />
         </button>
       </Menu.Trigger>
-      <Menu.List 
+      <Menu.List
         testId="dropdown-heading-paragraph-list"
         className={css({
           minWidth: "200px",
@@ -301,27 +303,30 @@ const HeadingParagraphDropdown: React.FC<HeadingParagraphDropdownProps> = ({ isD
         })}
       >
         {enabledOptions.map((option, index) => {
-          const isFirstHeading = option.type === 'heading' && 
-            index > 0 && 
-            enabledOptions[index - 1].type === 'paragraph';
-          
+          const isFirstHeading =
+            option.type === "heading" &&
+            index > 0 &&
+            enabledOptions[index - 1]?.type === "paragraph";
+
           return (
             <React.Fragment key={option.key}>
               {isFirstHeading && (
-                <div className={css({
-                  borderTop: `1px solid ${tokens.gray300}`,
-                  margin: `${tokens.spacingXs} ${tokens.spacingS}`,
-                  position: 'relative',
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: '-1px',
-                    left: '0',
-                    right: '0',
-                    height: '1px',
-                    background: `linear-gradient(90deg, ${tokens.gray300} 0%, transparent 100%)`,
-                  },
-                })} />
+                <div
+                  className={css({
+                    borderTop: `1px solid ${tokens.gray300}`,
+                    margin: `${tokens.spacingXs} ${tokens.spacingS}`,
+                    position: "relative",
+                    "&::before": {
+                      content: '""',
+                      position: "absolute",
+                      top: "-1px",
+                      left: "0",
+                      right: "0",
+                      height: "1px",
+                      background: `linear-gradient(90deg, ${tokens.gray300} 0%, transparent 100%)`,
+                    },
+                  })}
+                />
               )}
               <Menu.Item
                 isInitiallyFocused={selected === option.key}
@@ -330,7 +335,7 @@ const HeadingParagraphDropdown: React.FC<HeadingParagraphDropdownProps> = ({ isD
                 disabled={isDisabled}
                 className={css({
                   padding: `${tokens.spacingXs} ${tokens.spacingS}`,
-                  '&:hover': {
+                  "&:hover": {
                     backgroundColor: tokens.gray100,
                   },
                   '&[aria-selected="true"]': {
@@ -341,10 +346,14 @@ const HeadingParagraphDropdown: React.FC<HeadingParagraphDropdownProps> = ({ isD
               >
                 <span
                   style={{
-                    fontSize: option.style?.fontSize || (option.type === 'heading' ? '1.1em' : 'inherit'),
-                    fontWeight: option.style?.fontWeight || (option.type === 'heading' ? 600 : 400),
-                    lineHeight: option.style?.lineHeight || 'inherit',
-                    display: 'block',
+                    fontSize:
+                      option.style?.fontSize ||
+                      (option.type === "heading" ? "1.1em" : "inherit"),
+                    fontWeight:
+                      option.style?.fontWeight ||
+                      (option.type === "heading" ? 600 : 400),
+                    lineHeight: option.style?.lineHeight || "inherit",
+                    display: "block",
                     padding: `${tokens.spacing2Xs} 0`,
                   }}
                 >
@@ -369,7 +378,7 @@ const ListDropdown: React.FC<ListDropdownProps> = ({ isDisabled, sdk }) => {
   const [isOpen, setOpen] = React.useState(false);
   const [selected, setSelected] = React.useState<string>("none");
   const configLists = useLists();
-  
+
   // Generate list options from configuration
   const listOptions: ListOption[] = React.useMemo(() => {
     const options: ListOption[] = [
@@ -383,17 +392,24 @@ const ListDropdown: React.FC<ListDropdownProps> = ({ isDisabled, sdk }) => {
 
     // Add configured list types
     for (const listConfig of configLists) {
-      const blockType = listConfig.type === 'ol' ? BLOCKS.OL_LIST : BLOCKS.UL_LIST;
-      
+      const blockType =
+        listConfig.type === "ol" ? BLOCKS.OL_LIST : BLOCKS.UL_LIST;
+
       // Choose appropriate icon based on list type
       let icon: React.ReactNode;
-      if (listConfig.key === 'bullet' || listConfig.listStyle === 'bullets') {
+      if (listConfig.key === "bullet" || listConfig.listStyle === "bullets") {
         icon = <ListBulletedIcon />;
-      } else if (listConfig.key === 'tick' || listConfig.listStyle === 'ticks') {
+      } else if (
+        listConfig.key === "tick" ||
+        listConfig.listStyle === "ticks"
+      ) {
         icon = <DoneIcon />;
-      } else if (listConfig.key === 'cross' || listConfig.listStyle === 'crosses') {
+      } else if (
+        listConfig.key === "cross" ||
+        listConfig.listStyle === "crosses"
+      ) {
         icon = <CloseIcon />;
-      } else if (listConfig.type === 'ol') {
+      } else if (listConfig.type === "ol") {
         icon = <ListNumberedIcon />;
       } else {
         icon = <ListBulletedIcon />; // Default to bullet icon

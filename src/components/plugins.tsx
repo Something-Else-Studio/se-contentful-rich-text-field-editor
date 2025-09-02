@@ -718,6 +718,10 @@ export const ToolbarColorButton = ({
     [editor],
   );
 
+  const handleClearColor = React.useCallback(() => {
+    applyDataToSelection(editor, "textColor", "");
+  }, [editor]);
+
   const handleHexSubmit = React.useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
@@ -744,6 +748,41 @@ export const ToolbarColorButton = ({
         </ToolbarButton>
       </Menu.Trigger>
       <Menu.List>
+        <Menu.Item
+          key="clear"
+          onClick={handleClearColor}
+          className={css({
+            borderBottom: `1px solid #e5e7eb`,
+            marginBottom: "4px",
+            paddingBottom: "8px",
+          })}
+        >
+          <div
+            className={css({
+              width: "24px",
+              height: "24px",
+              borderRadius: "50%",
+              border: "2px solid #e5e7eb",
+              backgroundColor: "transparent",
+              cursor: "pointer",
+              display: "inline-block",
+              margin: "4px",
+              position: "relative",
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: "50%",
+                left: "10%",
+                right: "10%",
+                height: "2px",
+                backgroundColor: "#ef4444",
+                transform: "rotate(-45deg)",
+              },
+            })}
+            title="Clear text color"
+          />
+          Clear Color
+        </Menu.Item>
         {colors.map((color) => (
           <Menu.Item
             key={color.key}
@@ -795,6 +834,10 @@ export const ToolbarBackgroundColorButton = ({
     [editor],
   );
 
+  const handleClearBackgroundColor = React.useCallback(() => {
+    applyDataToSelection(editor, "backgroundColor", "");
+  }, [editor]);
+
   const handleHexSubmit = React.useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
@@ -830,6 +873,41 @@ export const ToolbarBackgroundColorButton = ({
         </ToolbarButton>
       </Menu.Trigger>
       <Menu.List>
+        <Menu.Item
+          key="clear-background"
+          onClick={handleClearBackgroundColor}
+          className={css({
+            borderBottom: `1px solid #e5e7eb`,
+            marginBottom: "4px",
+            paddingBottom: "8px",
+          })}
+        >
+          <div
+            className={css({
+              width: "24px",
+              height: "24px",
+              borderRadius: "50%",
+              border: "2px solid #e5e7eb",
+              backgroundColor: "transparent",
+              cursor: "pointer",
+              display: "inline-block",
+              margin: "4px",
+              position: "relative",
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: "50%",
+                left: "10%",
+                right: "10%",
+                height: "2px",
+                backgroundColor: "#ef4444",
+                transform: "rotate(-45deg)",
+              },
+            })}
+            title="Clear background color"
+          />
+          Clear Background Color
+        </Menu.Item>
         {colors.map((color) => (
           <Menu.Item
             key={color.key}

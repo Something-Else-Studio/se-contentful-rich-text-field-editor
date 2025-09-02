@@ -91,7 +91,7 @@ export const ConnectedRichTextEditor = (props: ConnectedRichTextProps) => {
   const { sdk, onAction, restrictedMarks } = props;
 
   const id = getContentfulEditorId(sdk);
-  const plugins = React.useMemo(
+  const plugins: PlatePlugin[] = React.useMemo(
     () =>
       props.customGetPlugins
         ? props.customGetPlugins(sdk, onAction ?? noop, restrictedMarks)
@@ -100,8 +100,14 @@ export const ConnectedRichTextEditor = (props: ConnectedRichTextProps) => {
             onAction ?? noop,
             restrictedMarks,
             props.additionalPlugins,
-          ) as PlatePlugin[],
-    [sdk, onAction, restrictedMarks, props.additionalPlugins, props.customGetPlugins],
+          ),
+    [
+      sdk,
+      onAction,
+      restrictedMarks,
+      props.additionalPlugins,
+      props.customGetPlugins,
+    ],
   );
 
   const initialValue = React.useMemo(() => {
@@ -148,7 +154,10 @@ export const ConnectedRichTextEditor = (props: ConnectedRichTextProps) => {
                   offset={props.stickyToolbarOffset}
                 >
                   {props.customToolbar ? (
-                    <props.customToolbar isDisabled={props.isDisabled} sdk={sdk} />
+                    <props.customToolbar
+                      isDisabled={props.isDisabled}
+                      sdk={sdk}
+                    />
                   ) : (
                     <Toolbar
                       isDisabled={props.isDisabled}
