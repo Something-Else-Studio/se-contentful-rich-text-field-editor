@@ -1,0 +1,144 @@
+{
+  "colors": [
+    {
+      "key": "black",
+      "name": "Black",
+      "value": "#000000"
+    },
+    {
+      "key": "white",
+      "name": "White",
+      "value": "#ffffff",
+      "oppositeColor": "black"
+    },
+    {
+      "key": "gray",
+      "name": "Gray",
+      "value": "#6f7e80"
+    },
+    {
+      "key": "deep-purple",
+      "name": "Deep Purple",
+      "value": "#332f4a",
+      "oppositeColor": "white"
+    }
+  ],
+  "enableHexPicker": true,
+  "typography": {
+    "font": "figtree",
+    "baseLineHeight": 1.2,
+    "headings": [
+      {
+        "level": "h1",
+        "name": "Heading 1",
+        "tag": "h1",
+        "style": {
+          "fontSize": "48px",
+          "fontWeight": 700,
+          "lineHeight": 1.2
+        }
+      },
+      {
+        "level": "h2",
+        "name": "Heading 2",
+        "tag": "h2",
+        "style": {
+          "fontSize": "40px",
+          "fontWeight": 700,
+          "lineHeight": 1.2
+        }
+      },
+      {
+        "level": "h3",
+        "name": "Heading 3",
+        "tag": "h3",
+        "style": {
+          "fontSize": "32px",
+          "fontWeight": 700,
+          "lineHeight": 1.2
+        }
+      },
+      {
+        "level": "h4",
+        "name": "Heading 4",
+        "tag": "h4",
+        "style": {
+          "fontSize": "28px",
+          "fontWeight": 700,
+          "lineHeight": 1.2
+        }
+      }
+    ],
+    "paragraphs": [
+      {
+        "key": "p-lg",
+        "name": "Paragraph Large",
+        "tag": "p-lg",
+        "style": {
+          "fontSize": "18px",
+          "fontWeight": 400,
+          "lineHeight": 1.44
+        }
+      },
+      {
+        "key": "p-base",
+        "name": "Paragraph Base",
+        "tag": "p-base",
+        "style": {
+          "fontSize": "16px",
+          "fontWeight": 400,
+          "lineHeight": 1.475
+        }
+      },
+      {
+        "key": "p-medium",
+        "name": "Paragraph Medium",
+        "tag": "p-medium",
+        "style": {
+          "fontSize": "15px",
+          "fontWeight": 500,
+          "lineHeight": 1.475
+        }
+      },
+      {
+        "key": "p-sm",
+        "name": "Paragraph Small",
+        "tag": "p-sm",
+        "style": {
+          "fontSize": "14px",
+          "fontWeight": 400,
+          "lineHeight": 1.475
+        }
+      }
+    ]
+  },
+  "lists": [
+    {
+      "key": "bullet",
+      "name": "Bullet List",
+      "tag": "ul",
+      "type": "ul",
+      "listStyle": "bullets"
+    },
+    {
+      "key": "numbered",
+      "name": "Numbered List",
+      "tag": "ol",
+      "type": "ol"
+    },
+    {
+      "key": "tick",
+      "name": "Tick List",
+      "tag": "tick-list",
+      "type": "ul",
+      "listStyle": "ticks"
+    },
+    {
+      "key": "cross",
+      "name": "Cross list",
+      "tag": "cross-list",
+      "type": "ul",
+      "listStyle": "crosses"
+    }
+  ]
+}

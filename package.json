@@ -66,6 +66,7 @@
     "test": "vitest",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
+    "process-config": "node scripts/processConfig.js",
     "create-app-definition": "contentful-app-scripts create-app-definition",
     "add-locations": "contentful-app-scripts add-locations",
     "upload": "contentful-app-scripts upload --bundle-dir ./build",

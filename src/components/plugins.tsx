@@ -15,17 +15,9 @@ import {
 import type { Element } from "../CoreRichText/internal/types/editor";
 import { Menu } from "@contentful/f36-components";
 import { ToolbarButton } from "../CoreRichText/plugins/shared/ToolbarButton";
-import colorConfig from "../config/colorConfig.json";
+import { useColors, useTypography } from "../contexts/ConfigContext";
 
-// Color configuration interface
-interface ColorConfig {
-  enableHexPicker: boolean;
-  colors: Array<{
-    key: string;
-    name: string;
-    value: string;
-  }>;
-}
+// Color configuration is now handled through the configuration context
 
 // Type definition for getSpecialContext return value
 type SpecialContext =
@@ -63,20 +55,60 @@ type SpecialContext =
     }
   | null;
 
-// Load color configuration with fallback
-const getColorConfig = (): ColorConfig => {
-  try {
-    return colorConfig as ColorConfig;
-  } catch {
-    // Fallback configuration if JSON loading fails
-    return {
-      enableHexPicker: false,
-      colors: [
-        { key: "black", name: "Black", value: "#000000" },
-        { key: "gray", name: "Gray", value: "#6b7280" },
-      ],
-    };
+// Styled Paragraph component that handles configured paragraph styles
+export const StyledParagraph: PlatePluginComponent = ({
+  attributes,
+  children,
+  element,
+}) => {
+  const typography = useTypography();
+  const elementData = element.data;
+
+  // Get paragraph style from data
+  const paragraphKey = elementData?.['paragraphStyle'] as string | undefined;
+  
+  // Find the style configuration
+  let paragraphConfig = undefined;
+  if (paragraphKey) {
+    paragraphConfig = typography.paragraphs.find(p => p.key === paragraphKey);
   }
+
+  // Apply styles
+  const style: React.CSSProperties = {
+    marginBottom: '1.5em',
+    direction: 'inherit',
+  };
+
+  if (paragraphConfig) {
+    style.fontSize = paragraphConfig.style.fontSize;
+    style.fontWeight = paragraphConfig.style.fontWeight;
+    style.lineHeight = paragraphConfig.style.lineHeight;
+    if (paragraphConfig.style.letterSpacing) {
+      style.letterSpacing = `${paragraphConfig.style.letterSpacing}px`;
+    }
+  }
+
+  // Handle color data if present
+  if (elementData?.textColor || elementData?.backgroundColor) {
+    if (elementData.textColor) {
+      const colorValue = elementData.textColor.startsWith("#")
+        ? elementData.textColor
+        : elementData.textColor; // Color resolution handled in renderLeaf
+      style.color = colorValue;
+    }
+    if (elementData.backgroundColor) {
+      const bgValue = elementData.backgroundColor.startsWith("#")
+        ? elementData.backgroundColor
+        : elementData.backgroundColor; // Color resolution handled in renderLeaf
+      style.backgroundColor = bgValue;
+    }
+  }
+
+  return (
+    <div {...attributes} style={style}>
+      {children}
+    </div>
+  );
 };
 
 const styles = {
@@ -676,7 +708,7 @@ export const ToolbarColorButton = ({
   isDisabled?: boolean;
 }) => {
   const editor = useContentfulEditor();
-  const config = React.useMemo(() => getColorConfig(), []);
+  const { colors, enableHexPicker } = useColors();
   const [hexValue, setHexValue] = React.useState("");
 
   const handleColorSelect = React.useCallback(
@@ -712,7 +744,7 @@ export const ToolbarColorButton = ({
         </ToolbarButton>
       </Menu.Trigger>
       <Menu.List>
-        {config.colors.map((color) => (
+        {colors.map((color) => (
           <Menu.Item
             key={color.key}
             onClick={() => handleColorSelect(color.value)}
@@ -727,7 +759,7 @@ export const ToolbarColorButton = ({
             {color.name}
           </Menu.Item>
         ))}
-        {config.enableHexPicker && (
+        {enableHexPicker && (
           <div className={styles.hexInputContainer}>
             <form onSubmit={handleHexSubmit}>
               <TextInput
@@ -753,7 +785,7 @@ export const ToolbarBackgroundColorButton = ({
   isDisabled?: boolean;
 }) => {
   const editor = useContentfulEditor();
-  const config = React.useMemo(() => getColorConfig(), []);
+  const { colors, enableHexPicker } = useColors();
   const [hexValue, setHexValue] = React.useState("");
 
   const handleBackgroundColorSelect = React.useCallback(
@@ -798,7 +830,7 @@ export const ToolbarBackgroundColorButton = ({
         </ToolbarButton>
       </Menu.Trigger>
       <Menu.List>
-        {config.colors.map((color) => (
+        {colors.map((color) => (
           <Menu.Item
             key={color.key}
             onClick={() => handleBackgroundColorSelect(color.value)}
@@ -813,7 +845,7 @@ export const ToolbarBackgroundColorButton = ({
             {color.name}
           </Menu.Item>
         ))}
-        {config.enableHexPicker && (
+        {enableHexPicker && (
           <div className={styles.hexInputContainer}>
             <form onSubmit={handleHexSubmit}>
               <TextInput
@@ -846,15 +878,13 @@ const StyledTable: PlatePluginComponent = ({
     if (elementData.textColor) {
       const colorValue = elementData.textColor.startsWith("#")
         ? elementData.textColor
-        : colorConfig.colors.find((c) => c.key === elementData.textColor)
-            ?.value || elementData.textColor;
+        : elementData.textColor; // Color resolution handled in renderLeaf
       style.color = colorValue;
     }
     if (elementData.backgroundColor) {
       const bgValue = elementData.backgroundColor.startsWith("#")
         ? elementData.backgroundColor
-        : colorConfig.colors.find((c) => c.key === elementData.backgroundColor)
-            ?.value || elementData.backgroundColor;
+        : elementData.backgroundColor; // Color resolution handled in renderLeaf
       style.backgroundColor = bgValue;
     }
   }
@@ -883,15 +913,13 @@ const StyledTableRow: PlatePluginComponent = ({
     if (elementData.textColor) {
       const colorValue = elementData.textColor.startsWith("#")
         ? elementData.textColor
-        : colorConfig.colors.find((c) => c.key === elementData.textColor)
-            ?.value || elementData.textColor;
+        : elementData.textColor; // Color resolution handled in renderLeaf
       style.color = colorValue;
     }
     if (elementData.backgroundColor) {
       const bgValue = elementData.backgroundColor.startsWith("#")
         ? elementData.backgroundColor
-        : colorConfig.colors.find((c) => c.key === elementData.backgroundColor)
-            ?.value || elementData.backgroundColor;
+        : elementData.backgroundColor; // Color resolution handled in renderLeaf
       style.backgroundColor = bgValue;
     }
   }
@@ -919,15 +947,13 @@ const StyledListUL: PlatePluginComponent = ({
     if (elementData.textColor) {
       const colorValue = elementData.textColor.startsWith("#")
         ? elementData.textColor
-        : colorConfig.colors.find((c) => c.key === elementData.textColor)
-            ?.value || elementData.textColor;
+        : elementData.textColor; // Color resolution handled in renderLeaf
       style.color = colorValue;
     }
     if (elementData.backgroundColor) {
       const bgValue = elementData.backgroundColor.startsWith("#")
         ? elementData.backgroundColor
-        : colorConfig.colors.find((c) => c.key === elementData.backgroundColor)
-            ?.value || elementData.backgroundColor;
+        : elementData.backgroundColor; // Color resolution handled in renderLeaf
       style.backgroundColor = bgValue;
     }
   }
@@ -963,15 +989,13 @@ const StyledListOL: PlatePluginComponent = ({
     if (elementData.textColor) {
       const colorValue = elementData.textColor.startsWith("#")
         ? elementData.textColor
-        : colorConfig.colors.find((c) => c.key === elementData.textColor)
-            ?.value || elementData.textColor;
+        : elementData.textColor; // Color resolution handled in renderLeaf
       style.color = colorValue;
     }
     if (elementData.backgroundColor) {
       const bgValue = elementData.backgroundColor.startsWith("#")
         ? elementData.backgroundColor
-        : colorConfig.colors.find((c) => c.key === elementData.backgroundColor)
-            ?.value || elementData.backgroundColor;
+        : elementData.backgroundColor; // Color resolution handled in renderLeaf
       style.backgroundColor = bgValue;
     }
   }

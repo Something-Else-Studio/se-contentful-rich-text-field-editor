@@ -1,0 +1,7 @@
+{
+  "enableHexPicker": true,
+  "colors": ["Black", "White", "Gray", "Deep Purple"],
+ "headings": [{"name": "Heading 1", "tag": "h1"}, {"name": "Heading 2", "tag": "h2"}, {"name": "Heading 3", "tag": "h3"}, {"name": "Heading 4", "tag": "h4"}],
+ "paragraphs": [{"name": "Paragraph Large", "tag": "p-lg"}, {"name": "Paragraph Base", "tag": "p-base"}, {"name": "Paragraph Medium", "tag": "p-medium"}, {"name": "Paragraph Small", "tag": "p-sm"}],
+ "lists": [{"name": "Bullet List", "tag": "ul"}, {"name": "Numbered List", "tag": "ol"}, {"name": "Tick List", "tag": "tick-list"},{"name": "Cross list", "tag": "cross-list"}]
+}

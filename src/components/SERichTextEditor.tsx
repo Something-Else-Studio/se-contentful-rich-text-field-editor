@@ -5,7 +5,7 @@ import type { Document } from "@contentful/rich-text-types";
 import { RichTextEditor } from "../CoreRichText";
 import { CustomToolbar } from "./CustomToolbar";
 import { getCustomPlugins } from "./customPlugins";
-import colorConfig from "../config/colorConfig.json";
+import { ConfigProvider, useColors } from "../contexts/ConfigContext";
 
 type RichTextProps = {
   sdk: FieldAppSDK;
@@ -20,8 +20,9 @@ type RichTextProps = {
   actionsDisabled?: boolean;
 };
 
-const SERichTextEditor = (props: RichTextProps) => {
-  props.sdk.window.startAutoResizer();
+// Inner component that uses the config context
+const RichTextEditorWithConfig = (props: RichTextProps) => {
+  const { colors } = useColors();
 
   // Custom renderLeaf function to handle color data on text nodes
   const renderLeaf = React.useCallback(
@@ -40,7 +41,7 @@ const SERichTextEditor = (props: RichTextProps) => {
         let textColorValue = textColorData;
         // If it's not a hex color, try to find it in the config
         if (!textColorData.startsWith("#")) {
-          const configColor = colorConfig.colors.find(
+          const configColor = colors.find(
             (c) => c.key === textColorData,
           );
           textColorValue = configColor?.value || textColorData;
@@ -53,7 +54,7 @@ const SERichTextEditor = (props: RichTextProps) => {
         let backgroundColorValue = backgroundColorData;
         // If it's not a hex color, try to find it in the config
         if (!backgroundColorData.startsWith("#")) {
-          const configColor = colorConfig.colors.find(
+          const configColor = colors.find(
             (c) => c.key === backgroundColorData,
           );
           backgroundColorValue = configColor?.value || backgroundColorData;
@@ -72,7 +73,7 @@ const SERichTextEditor = (props: RichTextProps) => {
 
       return <span {...attributes}>{children}</span>;
     },
-    [],
+    [colors],
   );
 
   return (
@@ -83,6 +84,16 @@ const SERichTextEditor = (props: RichTextProps) => {
       customGetPlugins={getCustomPlugins}
       renderLeaf={renderLeaf}
     />
+  );
+};
+
+const SERichTextEditor = (props: RichTextProps) => {
+  props.sdk.window.startAutoResizer();
+
+  return (
+    <ConfigProvider sdk={props.sdk}>
+      <RichTextEditorWithConfig {...props} />
+    </ConfigProvider>
   );
 };
 

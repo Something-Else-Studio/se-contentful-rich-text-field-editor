@@ -35,8 +35,8 @@ import {
 import { createTrailingParagraphPlugin } from "../CoreRichText/plugins/TrailingParagraph";
 import { createVoidsPlugin } from "../CoreRichText/plugins/Voids";
 
-// Import our color plugin
-import { ColorPlugin } from "./plugins";
+// Import our color plugin and styled paragraph
+import { ColorPlugin, StyledParagraph } from "./plugins";
 
 export const getCustomPlugins = (
   sdk: FieldAppSDK,
@@ -57,7 +57,10 @@ export const getCustomPlugins = (
       : []),
 
     // Block Elements
-    createParagraphPlugin(),
+    {
+      ...createParagraphPlugin(),
+      component: StyledParagraph, // Use our custom styled paragraph
+    },
     createListPlugin(),
     createHrPlugin(),
     createHeadingPlugin(),
