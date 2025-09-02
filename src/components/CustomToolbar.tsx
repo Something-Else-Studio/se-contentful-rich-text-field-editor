@@ -169,13 +169,18 @@ const HeadingParagraphDropdown: React.FC<HeadingParagraphDropdownProps> = ({
         // Check for paragraph with style
         if (el.type === BLOCKS.PARAGRAPH) {
           if (el.data?.["paragraphStyle"]) {
-            const paragraphKey = el.data["paragraphStyle"] as string;
-            setSelected(`paragraph-${paragraphKey}`);
-            return;
-          } else {
-            setSelected("paragraph-normal");
-            return;
+            const paragraphTag = el.data["paragraphStyle"] as string;
+            // Find the paragraph config by tag to get the key for selection
+            const paragraphConfig = typography.paragraphs.find(
+              (p) => p.tag === paragraphTag,
+            );
+            if (paragraphConfig) {
+              setSelected(`paragraph-${paragraphConfig.key}`);
+              return;
+            }
           }
+          setSelected("paragraph-normal");
+          return;
         }
 
         // Check for headings
@@ -204,12 +209,16 @@ const HeadingParagraphDropdown: React.FC<HeadingParagraphDropdownProps> = ({
             const el = element as Element;
 
             if (option.paragraphKey) {
-              // Set paragraph with style
+              // Set paragraph with style - store tag instead of key
+              const paragraphConfig = typography.paragraphs.find(
+                (p) => p.key === option.paragraphKey,
+              );
+              const tagValue = paragraphConfig?.tag || option.paragraphKey;
               setNodes(
                 editor,
                 {
                   type: BLOCKS.PARAGRAPH,
-                  data: { ...el.data, ["paragraphStyle"]: option.paragraphKey },
+                  data: { ...el.data, ["paragraphStyle"]: tagValue },
                 },
                 { at: editor.selection },
               );

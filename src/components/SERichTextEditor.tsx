@@ -39,11 +39,9 @@ const RichTextEditorWithConfig = (props: RichTextProps) => {
       // Handle text color
       if (textColorData && textColorData !== "") {
         let textColorValue = textColorData;
-        // If it's not a hex color, try to find it in the config
+        // If it's not a hex color, try to find it in the config by name
         if (!textColorData.startsWith("#")) {
-          const configColor = colors.find(
-            (c) => c.key === textColorData,
-          );
+          const configColor = colors.find((c) => c.name === textColorData);
           textColorValue = configColor?.value || textColorData;
         }
         style.color = textColorValue;
@@ -52,10 +50,10 @@ const RichTextEditorWithConfig = (props: RichTextProps) => {
       // Handle background color
       if (backgroundColorData && backgroundColorData !== "") {
         let backgroundColorValue = backgroundColorData;
-        // If it's not a hex color, try to find it in the config
+        // If it's not a hex color, try to find it in the config by name
         if (!backgroundColorData.startsWith("#")) {
           const configColor = colors.find(
-            (c) => c.key === backgroundColorData,
+            (c) => c.name === backgroundColorData,
           );
           backgroundColorValue = configColor?.value || backgroundColorData;
         }
