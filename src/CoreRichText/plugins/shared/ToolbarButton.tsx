@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Button, Tooltip } from "@contentful/f36-components";
 import tokens from "@contentful/f36-tokens";
 import { css, cx } from "emotion";
@@ -19,13 +20,13 @@ interface ToolbarButtonProps {
   onClick: () => void;
   isActive?: boolean;
   isDisabled?: boolean;
-  children: any;
+  children: React.ReactNode;
   title: string;
   className?: string;
   testId?: string;
 }
 
-export function ToolbarButton(props: ToolbarButtonProps) {
+export const ToolbarButton = React.forwardRef<HTMLButtonElement, ToolbarButtonProps>((props, ref) => {
   const {
     title,
     testId,
@@ -34,13 +35,14 @@ export function ToolbarButton(props: ToolbarButtonProps) {
     className,
     isDisabled = false,
   } = props;
-  const handleClick = (event) => {
+  const handleClick = (event: React.MouseEvent) => {
     event.preventDefault();
     props.onClick();
   };
 
   const button = (
     <Button
+      ref={ref}
       className={cx(styles.button, className)}
       isDisabled={isDisabled}
       startIcon={children}
@@ -60,4 +62,6 @@ export function ToolbarButton(props: ToolbarButtonProps) {
   }
 
   return button;
-}
+});
+
+ToolbarButton.displayName = "ToolbarButton";

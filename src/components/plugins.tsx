@@ -932,9 +932,13 @@ const StyledListUL: PlatePluginComponent = ({
     }
   }
 
+  // Get the list type from data attribute (for future rendering)
+  const listType = elementData?.listType || "bullets";
+
   return (
     <ul
       {...attributes}
+      data-list-type={listType}
       style={{
         padding: 0,
         margin: "0 0 1.25rem 1.25rem",

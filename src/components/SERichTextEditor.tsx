@@ -8,6 +8,7 @@ import {
   ToolbarColorButton,
   ToolbarBackgroundColorButton,
 } from "./plugins";
+import { ToolbarListTypeButton } from "./ToolbarListTypeButton";
 import colorConfig from "../config/colorConfig.json";
 
 type RichTextProps = {
@@ -30,6 +31,7 @@ const SERichTextEditor = (props: RichTextProps) => {
   const additionalToolbarButtons = [
     <ToolbarColorButton key="color" />,
     <ToolbarBackgroundColorButton key="background-color" />,
+    <ToolbarListTypeButton key="list-type" />,
   ];
 
   // Custom renderLeaf function to handle color data on text nodes
