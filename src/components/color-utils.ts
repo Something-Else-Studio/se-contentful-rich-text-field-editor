@@ -288,196 +288,127 @@ export const applyColorToSpecialElement = (
   console.log("Special element color application complete");
 };
 
-// Helper function to apply formatting to partial selections while preserving existing formatting
-const applyPartialSelectionWithFormatting = (
+// Helper function to handle block-level coloring for collapsed selections
+const handleBlockLevelColoring = (
   editor: PlateEditor,
   dataKey: string,
   dataValue: string,
+  anchor: Point,
 ) => {
-  const { anchor, focus } = editor.selection!;
-
-  editor.withoutNormalizing(() => {
-    // Get all text nodes that intersect with the selection
-    const intersectingNodes = Array.from(
-      editor.nodes({
-        at: editor.selection!,
-        match: (n) => Text.isText(n),
-      }),
-    ) as [Text, Path][];
-
-    console.log("Intersecting nodes:", intersectingNodes.length);
-
-    // Process each intersecting node
-    for (let i = 0; i < intersectingNodes.length; i++) {
-      const nodeEntry = intersectingNodes[i];
-      if (!nodeEntry) continue;
-      const [node, path] = nodeEntry;
-      const nodeStart = editor.start(path);
-      const nodeEnd = editor.end(path);
-
-      console.log(`Processing node ${i}:`, {
-        // biome-ignore lint/suspicious/noExplicitAny: Slate text nodes need any for text property
-        text: (node as any).text,
-        path,
-        nodeStart,
-        nodeEnd,
-        anchor,
-        focus,
-      });
-
-      // Determine the parts of this node that are selected
-      const selectionStart =
-        Point.compare(anchor, nodeStart) >= 0 ? anchor : nodeStart;
-      const selectionEnd = Point.compare(focus, nodeEnd) <= 0 ? focus : nodeEnd;
-
-      const beforeSelection = Point.compare(selectionStart, nodeStart) > 0;
-      const afterSelection = Point.compare(selectionEnd, nodeEnd) < 0;
-
-      console.log("Selection analysis:", {
-        selectionStart,
-        selectionEnd,
-        beforeSelection,
-        afterSelection,
-      });
-
-      // biome-ignore lint/suspicious/noExplicitAny: Slate text nodes need any for data properties
-      const textNode = node as any;
-      const existingData = textNode.data || {};
-
-      if (beforeSelection || afterSelection) {
-        // Need to split this node
-        const fullText = textNode.text;
-        const beforeText = beforeSelection
-          ? fullText.slice(0, selectionStart.offset - nodeStart.offset)
-          : "";
-        const selectedText = fullText.slice(
-          selectionStart.offset - nodeStart.offset,
-          selectionEnd.offset - nodeStart.offset,
-        );
-        const afterText = afterSelection
-          ? fullText.slice(selectionEnd.offset - nodeStart.offset)
-          : "";
-
-        console.log("Splitting node:", {
-          fullText,
-          beforeText,
-          selectedText,
-          afterText,
-        });
-
-        // Remove the original node
-        editor.removeNodes({ at: path });
-
-        // Insert the parts back
-        const parentPath = path.slice(0, -1);
-        let insertIndex = path[path.length - 1] || 0;
-
-        // Insert before part if it exists
-        if (beforeText) {
-          const beforeNode = {
-            text: beforeText,
-            data: existingData,
-          };
-          // biome-ignore lint/suspicious/noExplicitAny: Slate insertNodes requires any for custom node properties
-          editor.insertNodes(beforeNode as any, {
-            at: [...parentPath, insertIndex],
-          });
-          insertIndex++;
-        }
-
-        // Insert selected part with new formatting
-        if (selectedText) {
-          const selectedNode = {
-            text: selectedText,
-            data: { ...existingData, [dataKey]: dataValue },
-          };
-          // biome-ignore lint/suspicious/noExplicitAny: Slate insertNodes requires any for custom node properties
-          editor.insertNodes(selectedNode as any, {
-            at: [...parentPath, insertIndex],
-          });
-          insertIndex++;
-        }
-
-        // Insert after part if it exists
-        if (afterText) {
-          const afterNode = {
-            text: afterText,
-            data: existingData,
-          };
-          // biome-ignore lint/suspicious/noExplicitAny: Slate insertNodes requires any for custom node properties
-          editor.insertNodes(afterNode as any, {
-            at: [...parentPath, insertIndex],
-          });
-        }
-      } else {
-        // The entire node is selected - just update its data
-        const updatedData = { ...existingData, [dataKey]: dataValue };
-        // biome-ignore lint/suspicious/noExplicitAny: Slate editor types require any for generic node operations
-        editor.setNodes({ data: updatedData } as any, { at: path });
-      }
-    }
-
-    // After processing all nodes, merge adjacent nodes with identical formatting
-    mergeAdjacentNodesWithSameFormatting(editor);
-  });
-};
-
-// Helper function to merge adjacent text nodes with identical formatting
-const mergeAdjacentNodesWithSameFormatting = (editor: PlateEditor) => {
-  // Get the current block that contains the selection
+  // Try to get the parent block
   const blockEntry = editor.above({
     // biome-ignore lint/suspicious/noExplicitAny: Slate node matching requires any for block detection
     match: (n: any) => editor.isBlock(n),
   });
 
-  if (!blockEntry) return;
+  if (!blockEntry) {
+    console.log("No parent block found, returning");
+    return;
+  }
 
-  const [_block, blockPath] = blockEntry;
+  const [block, blockPath] = blockEntry;
+  const typedBlock = block as Element;
+  console.log("Parent block:", { block, blockPath });
+  console.log("Block type:", typedBlock.type);
 
-  // Get all text nodes in the block
-  const textEntries = Array.from(
-    editor.nodes({
+  // Check if it's a supported block type for background coloring
+  const supportedBlockTypes: string[] = [
+    BLOCKS.PARAGRAPH,
+    BLOCKS.QUOTE,
+    BLOCKS.HEADING_1,
+    BLOCKS.HEADING_2,
+    BLOCKS.HEADING_3,
+    BLOCKS.HEADING_4,
+    BLOCKS.HEADING_5,
+    BLOCKS.HEADING_6,
+  ];
+
+  const isSupportedBlock = supportedBlockTypes.includes(typedBlock.type);
+  console.log("Is supported block type:", isSupportedBlock);
+
+  if (!isSupportedBlock) {
+    console.log("Unsupported block type, returning");
+    return;
+  }
+
+  // Get the start position of the block
+  const blockStart = editor.start(blockPath);
+  console.log("Block start position:", blockStart);
+
+  // Check if cursor is at block start
+  const isAtBlockStart = Point.equals(anchor, blockStart);
+  console.log("Is at block start:", isAtBlockStart);
+
+  if (!isAtBlockStart) {
+    console.log("Not at block start, returning");
+    return;
+  }
+
+  // Check if this is a paragraph inside a container (blockquote, list item)
+  let targetPath = blockPath;
+  let targetDescription = `${typedBlock.type} block`;
+
+  if (typedBlock.type === BLOCKS.PARAGRAPH) {
+    console.log("Current block is paragraph, checking for container parent");
+
+    // Look for container ancestors (blockquote, list item)
+    const containerEntry = editor.above({
       at: blockPath,
-      match: (n) => Text.isText(n),
-    }),
-  ) as [Text, Path][];
+      // biome-ignore lint/suspicious/noExplicitAny: Slate node matching requires any for container detection
+      match: (n: any) => [BLOCKS.QUOTE, BLOCKS.LIST_ITEM].includes(n.type),
+    });
 
-  // Merge adjacent nodes with identical data
-  for (let i = textEntries.length - 1; i > 0; i--) {
-    const currentEntry = textEntries[i];
-    const prevEntry = textEntries[i - 1];
-    if (!currentEntry || !prevEntry) continue;
+    if (containerEntry) {
+      const [container, containerPath] = containerEntry;
+      const typedContainer = container as Element;
+      console.log("Found container parent:", { container, containerPath });
 
-    const [currentNode, currentPath] = currentEntry;
-    const [prevNode, prevPath] = prevEntry;
+      // Check if this paragraph is the first child of the container
+      const firstChildPath = [...containerPath, 0];
+      const isFirstChild = Path.equals(blockPath, firstChildPath);
+      console.log("Is first child of container:", isFirstChild);
 
-    // biome-ignore lint/suspicious/noExplicitAny: Slate text nodes need any for data properties
-    const currentData = (currentNode as any).data || {};
-    // biome-ignore lint/suspicious/noExplicitAny: Slate text nodes need any for data properties
-    const prevData = (prevNode as any).data || {};
-
-    // Check if data is identical
-    const currentDataStr = JSON.stringify(currentData);
-    const prevDataStr = JSON.stringify(prevData);
-
-    if (currentDataStr === prevDataStr) {
-      // Merge the nodes
-      // biome-ignore lint/suspicious/noExplicitAny: Slate text nodes need any for text property
-      const mergedText = (prevNode as any).text + (currentNode as any).text;
-      const mergedNode = {
-        text: mergedText,
-        data: currentData,
-      };
-
-      // Remove both nodes
-      editor.removeNodes({ at: currentPath });
-      editor.removeNodes({ at: prevPath });
-
-      // Insert merged node at previous position
-      // biome-ignore lint/suspicious/noExplicitAny: Slate insertNodes requires any for custom node properties
-      editor.insertNodes(mergedNode as any, { at: prevPath });
+      if (isFirstChild) {
+        console.log("Using container as target instead of paragraph");
+        targetPath = containerPath;
+        targetDescription = `${typedContainer.type} container`;
+      }
     }
   }
+
+  console.log("Final target:", { targetPath, targetDescription });
+  console.log(`Applying ${dataKey} to entire ${targetDescription}`);
+
+  // Check if we're targeting a container vs a regular block
+  if (targetPath !== blockPath) {
+    // Targeting a container - apply data to the container element
+    const [containerNode] = editor.node(targetPath);
+    // biome-ignore lint/suspicious/noExplicitAny: Slate container nodes need any for data properties
+    const containerElement = containerNode as any;
+    const existingData = containerElement.data || {};
+    const updatedData = { ...existingData, [dataKey]: dataValue };
+
+    console.log("Updating container element with data:", updatedData);
+    // biome-ignore lint/suspicious/noExplicitAny: Slate editor types require any for generic node operations
+    editor.setNodes({ data: updatedData } as any, { at: targetPath });
+  } else {
+    // Targeting a regular block - apply to text nodes using setNodes with split
+    console.log("Applying data to text nodes in block using setNodes");
+
+    editor.setNodes(
+      (node: any) => ({
+        ...node,
+        data: { ...(node.data || {}), [dataKey]: dataValue },
+      }),
+      {
+        at: targetPath,
+        match: (n) => Text.isText(n),
+        split: true,
+      },
+    );
+  }
+
+  console.log("Block-level color application complete");
 };
 
 // Shared function to apply data attributes to selected text while preserving formatting
@@ -486,6 +417,7 @@ export const applyDataToSelection = (
   dataKey: string,
   dataValue: string,
 ) => {
+  console.log("Applying data", editor.selection, dataKey, dataValue);
   if (!editor?.selection) {
     console.log("No editor or selection, returning");
     return;
@@ -506,222 +438,19 @@ export const applyDataToSelection = (
       return;
     }
 
-    // Try to get the parent block
-    const blockEntry = editor.above({
-      // biome-ignore lint/suspicious/noExplicitAny: Slate node matching requires any for block detection
-      match: (n: any) => editor.isBlock(n),
-    });
-
-    if (blockEntry) {
-      const [block, blockPath] = blockEntry;
-      const typedBlock = block as Element;
-      console.log("Parent block:", { block, blockPath });
-      console.log("Block type:", typedBlock.type);
-
-      // Check if it's a supported block type for background coloring
-      const supportedBlockTypes: string[] = [
-        BLOCKS.PARAGRAPH,
-        BLOCKS.QUOTE,
-        BLOCKS.HEADING_1,
-        BLOCKS.HEADING_2,
-        BLOCKS.HEADING_3,
-        BLOCKS.HEADING_4,
-        BLOCKS.HEADING_5,
-        BLOCKS.HEADING_6,
-        // List items would need special handling
-      ];
-
-      const isSupportedBlock = supportedBlockTypes.includes(typedBlock.type);
-      console.log("Is supported block type:", isSupportedBlock);
-
-      if (isSupportedBlock) {
-        // Get the start position of the block
-        const blockStart = editor.start(blockPath);
-        console.log("Block start position:", blockStart);
-
-        // Check if cursor is at block start
-        const isAtBlockStart = Point.equals(anchor, blockStart);
-        console.log("Is at block start:", isAtBlockStart);
-
-        // Check if this is a paragraph inside a container (blockquote, list item)
-        let targetPath = blockPath;
-        let targetDescription = `${typedBlock.type} block`;
-
-        if (typedBlock.type === BLOCKS.PARAGRAPH) {
-          console.log(
-            "Current block is paragraph, checking for container parent",
-          );
-
-          // Look for container ancestors (blockquote, list item)
-          const containerEntry = editor.above({
-            at: blockPath,
-            // biome-ignore lint/suspicious/noExplicitAny: Slate node matching requires any for container detection
-            match: (n: any) =>
-              [BLOCKS.QUOTE, BLOCKS.LIST_ITEM].includes(n.type),
-          });
-
-          if (containerEntry) {
-            const [container, containerPath] = containerEntry;
-            const typedContainer = container as Element;
-            console.log("Found container parent:", {
-              container,
-              containerPath,
-            });
-            console.log("Container type:", typedContainer.type);
-
-            // Check if this paragraph is the first child of the container
-            const firstChildPath = [...containerPath, 0];
-            const isFirstChild = Path.equals(blockPath, firstChildPath);
-            console.log(
-              "Is first child of container:",
-              isFirstChild,
-              "Expected path:",
-              firstChildPath,
-            );
-
-            if (isFirstChild) {
-              console.log("Using container as target instead of paragraph");
-              targetPath = containerPath;
-              targetDescription = `${typedContainer.type} container`;
-            }
-          }
-        }
-
-        console.log("Final target:", { targetPath, targetDescription });
-
-        // Apply color to entire target when at block start
-        if (isAtBlockStart) {
-          console.log(`Applying ${dataKey} to entire ${targetDescription}`);
-
-          // Check if we're targeting a container (blockquote, list item) vs a regular block
-          if (targetPath !== blockPath) {
-            // We're targeting a container - apply color data to the container element itself
-            console.log(
-              "Targeting container - applying data to container element",
-            );
-
-            // Get existing data from the container
-            const [containerNode] = editor.node(targetPath);
-            // biome-ignore lint/suspicious/noExplicitAny: Slate container nodes need any for data properties
-            const containerElement = containerNode as any;
-            const existingData = containerElement.data || {};
-            const updatedData = { ...existingData, [dataKey]: dataValue };
-
-            console.log(
-              "Updating container element:",
-              targetPath,
-              "with data:",
-              updatedData,
-            );
-
-            // Apply data directly to the container element
-            // biome-ignore lint/suspicious/noExplicitAny: Slate editor types require any for generic node operations
-            editor.setNodes({ data: updatedData } as any, {
-              at: targetPath,
-            });
-          } else {
-            // We're targeting a regular block - apply to text nodes within the block
-            console.log(
-              "Targeting regular block - applying data to text nodes",
-            );
-
-            // Get all text nodes within the target block
-            const blockTextEntries = Array.from(
-              editor.nodes({
-                at: targetPath,
-                match: (n) => Text.isText(n),
-              }),
-            ) as [Text, Path][];
-
-            console.log("Text nodes in block:", blockTextEntries.length);
-
-            // Apply background color to each text node in the block
-            for (const [node, nodePath] of blockTextEntries) {
-              // biome-ignore lint/suspicious/noExplicitAny: Slate text nodes need any for data properties
-              const textNode = node as any;
-              const existingData = textNode.data || {};
-              const updatedData = { ...existingData, [dataKey]: dataValue };
-
-              console.log(
-                "Updating text node:",
-                nodePath,
-                "with data:",
-                updatedData,
-              );
-
-              // biome-ignore lint/suspicious/noExplicitAny: Slate editor types require any for generic node operations
-              editor.setNodes({ data: updatedData } as any, {
-                at: nodePath,
-              });
-            }
-          }
-
-          console.log("Color application complete");
-          return;
-        }
-      }
-    }
-
-    console.log("Collapsed selection but not applying to block, returning");
+    // Handle block-level coloring for collapsed selections
+    handleBlockLevelColoring(editor, dataKey, dataValue, anchor);
     return;
   }
 
-  // Get all text nodes in the selection with their formatting
-  const textEntries = Array.from(
-    editor.nodes({
-      at: editor.selection,
-      match: (n) => Text.isText(n),
-    }),
-  ) as [Text, Path][];
+  // For expanded selections, use Slate's setNodes with split for automatic node handling
+  console.log("Applying data to expanded selection using setNodes with split");
 
-  // Check if we're selecting entire text nodes or partial content
-  const { anchor, focus } = editor.selection;
-  let isEntireNodesSelected = true;
+  editor.setNodes({ data: { [dataKey]: dataValue } } as Partial<Node>, {
+    at: editor.selection,
+    match: (n) => Text.isText(n),
+    split: true,
+  });
 
-  for (const [_node, path] of textEntries) {
-    const nodeStart = editor.start(path);
-    const nodeEnd = editor.end(path);
-
-    // Check if selection boundaries align with node boundaries
-    const anchorInNode =
-      Point.compare(anchor, nodeStart) >= 0 &&
-      Point.compare(anchor, nodeEnd) <= 0;
-    const focusInNode =
-      Point.compare(focus, nodeStart) >= 0 &&
-      Point.compare(focus, nodeEnd) <= 0;
-
-    // If either anchor or focus is outside this node, we have partial selection
-    if (!anchorInNode || !focusInNode) {
-      isEntireNodesSelected = false;
-      break;
-    }
-
-    // Even if both points are within the node, check if they align with node boundaries
-    const anchorAtStart = Point.equals(anchor, nodeStart);
-    const focusAtEnd = Point.equals(focus, nodeEnd);
-
-    // If selection doesn't cover the entire node, it's partial
-    if (!(anchorAtStart && focusAtEnd)) {
-      isEntireNodesSelected = false;
-      break;
-    }
-  }
-
-  if (isEntireNodesSelected && textEntries.length > 0) {
-    // Case 1: Selection covers entire text nodes - update each node to preserve existing data
-    for (const [node, path] of textEntries) {
-      // biome-ignore lint/suspicious/noExplicitAny: Slate text nodes need any for data properties
-      const textNode = node as any;
-      const existingData = textNode.data || {};
-      const updatedData = { ...existingData, [dataKey]: dataValue };
-
-      // biome-ignore lint/suspicious/noExplicitAny: Slate editor types require any for generic node operations
-      editor.setNodes({ data: updatedData } as any, {
-        at: path,
-      });
-    }
-  } else {
-    // Case 2: Partial selection - preserve existing formatting while applying new formatting
-    applyPartialSelectionWithFormatting(editor, dataKey, dataValue);
-  }
+  console.log("Color application complete");
 };
